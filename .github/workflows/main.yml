@@ -93,6 +93,14 @@ jobs:
               implementation 'androidx.appcompat:appcompat:1.7.0'
               implementation 'androidx.webkit:webkit:1.12.1'
           }
+
+          configurations.all {
+              resolutionStrategy.eachDependency { details ->
+                  if (details.requested.group == "org.jetbrains.kotlin") {
+                      details.useVersion "1.8.22"
+                  }
+              }
+          }
           EOF
 
           cat > app/src/main/res/values/strings.xml <<'EOF'
@@ -134,7 +142,9 @@ jobs:
                       </intent-filter>
 
                   </activity>
+
               </application>
+
           </manifest>
           EOF
 
@@ -166,11 +176,14 @@ jobs:
                   setContentView(webView);
 
                   WebSettings settings = webView.getSettings();
+
                   settings.setJavaScriptEnabled(true);
                   settings.setDomStorageEnabled(true);
                   settings.setDatabaseEnabled(true);
+
                   settings.setAllowFileAccess(false);
                   settings.setAllowContentAccess(false);
+
                   settings.setBuiltInZoomControls(false);
                   settings.setDisplayZoomControls(false);
                   settings.setSupportZoom(false);
@@ -187,36 +200,52 @@ jobs:
 
                       @Override
                       public android.webkit.WebResourceResponse shouldInterceptRequest(
-                              WebView view, WebResourceRequest request) {
-                          return assetLoader.shouldInterceptRequest(request.getUrl());
+                              WebView view,
+                              WebResourceRequest request) {
+
+                          return assetLoader.shouldInterceptRequest(
+                                  request.getUrl()
+                          );
                       }
 
                       @Override
                       public boolean shouldOverrideUrlLoading(
-                              WebView view, WebResourceRequest request) {
+                              WebView view,
+                              WebResourceRequest request) {
+
                           return openExternal(request.getUrl());
                       }
 
                       @Override
                       public boolean shouldOverrideUrlLoading(
-                              WebView view, String url) {
+                              WebView view,
+                              String url) {
+
                           return openExternal(Uri.parse(url));
                       }
 
                       private boolean openExternal(Uri uri) {
+
                           String scheme = uri.getScheme();
 
-                          if (scheme == null) return true;
+                          if (scheme == null) {
+                              return true;
+                          }
 
                           if (scheme.equals("https")
                                   && uri.getHost() != null
-                                  && uri.getHost().equals("appassets.androidplatform.net")) {
+                                  && uri.getHost().equals(
+                                          "appassets.androidplatform.net")) {
+
                               return false;
                           }
 
                           try {
-                              Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                              Intent intent =
+                                      new Intent(Intent.ACTION_VIEW, uri);
+
                               startActivity(intent);
+
                           } catch (ActivityNotFoundException ignored) {
                           }
 
@@ -233,6 +262,7 @@ jobs:
 
               @Override
               public void onBackPressed() {
+
                   if (webView != null && webView.canGoBack()) {
                       webView.goBack();
                   } else {
@@ -242,9 +272,11 @@ jobs:
 
               @Override
               protected void onDestroy() {
+
                   if (webView != null) {
                       webView.destroy();
                   }
+
                   super.onDestroy();
               }
           }
